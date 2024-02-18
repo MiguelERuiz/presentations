@@ -1,23 +1,24 @@
-\documentclass[14pt]{beamer}
+\documentclass[14pt,aspectratio=169]{beamer}
 
 \usepackage[english, spanish]{babel}
 % \usepackage[T1]{fontenc}
 % \usepackage[utf8]{inputenc}
-% % \usepackage{minted}
+\usepackage{minted}
 \usepackage[nodayofweek,level]{datetime}
+\usepackage{graphicx}
+\usepackage{xcolor}
 % \usepackage{simplebnf}
 % \usepackage{multicol}
 % \setlength{\columnsep}{0.2cm}
 
 % %% Definiciones de comandos
 \newcommand{\mydate}{\formatdate{29}{02}{2024}}
-
+\graphicspath{ {images/} }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Tema y estilo de la presentación
 \usetheme{Madrid}
 \author[Miguel E. Ruiz]{Miguel E. Ruiz}
 \title[\texttt{Madrid |> Elixir}]{Cómo conocí a la metaprogramación\\ (y sobreviví a ello)}
-% \institute{FDI-UCM}
 \date{\mydate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30,7 +31,176 @@
 \end{frame}
 
 \begin{frame}{Contenidos}
-%   \tableofcontents[hideallsubsections]
+  \tableofcontents[hideallsubsections]
 \end{frame}
 
+\section{Introducción}
+\begin{frame}{\texttt{IO.puts("Hello, World!")}}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \includegraphics[width=0.8\textwidth]{me-formal.jpg}
+    \end{column}
+
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item \texttt{Miguel [Emilio]}
+        \item Ingenierio Informático
+        \item Intereses: Programación funcional y concurrente
+        \item Erlang y Elixir
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{La metaprogramación y yo}
+  \begin{itemize}
+    \item Al acabar el Grado (2018), interés en Elixir
+    \begin{itemize}
+      \item Ejercicios en Codewars
+      \item Proyecto Pokedex
+    \end{itemize}
+    \item Interés en el libro \textit{Metaprogramming Elixir}
+    \item Sin embargo\dots
+    \begin{itemize}
+      \item Falta de tiempo (y de motivación)
+    \end{itemize}
+    \item Arranca el máster (2021) y\dots
+    \begin{itemize}
+      \item recupero el interés en la metaprogramación
+      \item posibilidad de hacer el TFM sobre ello
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{Metaprogramación}
+\begin{frame}{Metaprogramación}
+  \begin{center}
+    \Huge ¿KLK?
+    \end{center}
+\end{frame}
+
+\begin{frame}{Metaprogramación}{Definicion(es)}
+  \onslide<+->{\begin{block}{Elixir School}
+    \textit{Metaprogramming is the process of using code to write code.}
+  \end{block}}
+  \onslide<+->{\begin{block}{Rust Web Programming}
+    \textit{Metaprogramming can generally be described as a way in which the program
+    can manipulate itself based on certain instructions.}
+  \end{block}}
+  \onslide<+->{\begin{block}{ChatGPT}
+    \textit{Metaprogramming is a programming technique where a program can manipulate
+    its own structure or behavior at runtime.}
+  \end{block}}
+\end{frame}
+
+\begin{frame}{Metaprogramación}{Técnicas}
+  \begin{itemize}
+    \item Metaclases (Ruby, Python)
+    \item Macros (Scala, Rust)
+    \item Templates (C, C++)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Metaprogramación en Elixir}{Mi definición}
+  \begin{itemize}
+    \item Metaprogramación: mecanismo para generar programas a partir de
+    otros programas (en tiempo de \underline{compilación}).
+    \item Elixir tiene la capacidad de tratar los programas como un tipo de dato
+    y modificarlos o transformarlos.
+    \item Ejemplos de uso:
+      \begin{itemize}
+        \item Extensión del lenguaje a través de DSL.
+        \item Creación de nuevas librerías como \textit{Phoenix} y \textit{Ecto}.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Metaprogramación en Elixir}{¿Cómo?}
+  \begin{itemize}
+    \item A través de \underline{macros}, las cuales permiten \textbf{expandir}
+    el lenguaje
+  \end{itemize}
+  \begin{block}{¿Cuántas palabras reservadas hay en Elixir?}
+    \begin{itemize}
+      \item 8
+      \item 15
+      \item 37
+      \item ninguna
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Metaprogramación en Elixir}
+  \begin{itemize}
+    \item A través de \underline{macros}, las cuales permiten \textbf{expandir}
+    el lenguaje
+  \end{itemize}
+  \begin{block}{¿Cuántas palabras reservadas hay en Elixir?}
+    \begin{itemize}
+      \item 8
+      \item \textcolor{red}{15}
+      \item 37
+      \item ninguna
+    \end{itemize}
+    \mintinline{elixir}{true, false, nil, when, and, or, not, in}
+    \mintinline{elixir}|fn, do, end, catch, rescue, after, else|
+  \end{block}
+\end{frame}
+
+\begin{frame}{Metaprogramación en Elixir}
+  \begin{itemize}
+    \item Con el operador \mintinline{elixir}|defmacro| podremos definir
+    nuestras macros :D respetando las reglas
+    \begin{itemize}
+      \item Don't Write macros (WTF)
+      \item Use Macros Gratuitously
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{AST (de Elixir)}
+  El AST es un tipo de dato de Elixir que se representa mediante una tupla de 3
+  elementos:
+  \begin{itemize}
+    \item Un átomo que representa la función invocada u otra tupla que
+    representa un nodo interno del árbol.
+    \item Una lista de términos de metadatos de la función invocada.
+    \item Una lista de argumentos de la función del primer argumento.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Programación funcional}{AST de Elixir}
+  Para obtener el AST de una expresión de Elixir, se utiliza la función
+  \texttt{quote/2}:
+  \footnotesize  \begin{minted}{elixir}
+    iex> quote do: sum(1, 2, 3)
+    {:sum, [], [1, 2, 3]}
+  \end{minted}
+  \normalsize Si se requiere introducir valores dentro de un AST, se dispone de la función
+  \texttt{unquote/1}:
+  \footnotesize \begin{minted}{elixir}
+    iex> a = 3
+    iex> quote do: sum(1, 2, a)
+    {:sum, [], [1, 2, {:a, [], Elixir}]}
+    iex> quote do: sum(1, 2, unquote(a))
+    {:sum, [], [1, 2, 3]}
+  \end{minted}
+\end{frame}
+
+\begin{frame}
+  \centering
+  \huge{DEMO}
+  \textcolor{red}{macro unless, macro defpet (por definir)}
+\end{frame}
+
+\section{Mi TFM: \texttt{LogicElixir}}
+\begin{frame}{\texttt{LogicElixir}}
+  \begin{itemize}
+    \item cosas a traer de la presentación del TFM
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Bibliografía}
+\end{frame}
 \end{document}

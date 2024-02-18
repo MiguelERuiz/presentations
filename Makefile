@@ -8,11 +8,12 @@ TARGET_DIRECTORY=metaprogramming
 # Genera la presentación
 #
 slides:
+	cd $(TARGET_DIRECTORY) && \
 	pdflatex -shell-escape \
-	-output-directory=./$(TARGET_DIRECTORY) ./$(TARGET_DIRECTORY)/presentacion.tex
+	-output-directory=. presentacion.tex
 
 view:
-	evince metaprogramming/presentacion.pdf
+	evince ./$(TARGET_DIRECTORY)/presentacion.pdf
 
 clean:
 	rm -rf \
