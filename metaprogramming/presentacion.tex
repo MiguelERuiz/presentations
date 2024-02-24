@@ -73,6 +73,10 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Finalizadas las presentaciones\dots}
+  \includegraphics[width=0.8\textwidth]{calvin-hobbes.jpg}
+\end{frame}
+
 \section{Metaprogramación}
 \begin{frame}{Metaprogramación}
   \begin{center}
@@ -118,7 +122,7 @@
 
 \begin{frame}{Metaprogramación en Elixir}{¿Cómo?}
   \begin{itemize}
-    \item A través de \underline{macros}, las cuales permiten \textbf{expandir}
+    \item A través de \underline{macros}, las cuales permiten \textbf{extender}
     el lenguaje
   \end{itemize}
   \begin{block}{¿Cuántas palabras reservadas hay en Elixir?}
@@ -131,7 +135,7 @@
   \end{block}
 \end{frame}
 
-\begin{frame}{Metaprogramación en Elixir}
+\begin{frame}{Metaprogramación en Elixir}{¿Cómo?}
   \begin{itemize}
     \item A través de \underline{macros}, las cuales permiten \textbf{expandir}
     el lenguaje
@@ -148,29 +152,70 @@
   \end{block}
 \end{frame}
 
+\begin{frame}{Metaprogramación en Elixir}{Proceso de compilación}
+  \centering
+  \includegraphics[width=0.6\textwidth]{compilation_process.png}
+\end{frame}
+
 \begin{frame}{Metaprogramación en Elixir}
   \begin{itemize}
     \item Con el operador \mintinline{elixir}|defmacro| podremos definir
-    nuestras macros :D respetando las reglas
+    nuestras macros, respetando las reglas\footnotemark:
     \begin{itemize}
       \item Don't Write macros (WTF)
       \item Use Macros Gratuitously
     \end{itemize}
   \end{itemize}
+  \footnotetext[1]{Metaprogramming Elixir: Macro Rules}
+\end{frame}
+
+\begin{frame}[fragile]{Metaprogramación en Elixir}{Ejemplos}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \scriptsize \begin{minted}{elixir}
+        defmodule Sample.Weather do
+          use Ecto.Schema
+          schema "weather" do
+            field :city
+            field :temp_lo, :integer
+            field :temp_hi, :integer
+            field :prcp,    :float, default: 0.0
+          end
+        end
+      \end{minted}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \scriptsize \begin{minted}{elixir}
+        defmodule MyAppWeb.Router do
+          use MyAppWeb, :router
+
+          scope "/", MyAppWeb do
+            pipe_through :browser
+
+            get "/", PageController, :index
+            get "/about", PageController, :about
+          end
+        end
+      \end{minted}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \begin{frame}{AST (de Elixir)}
-  El AST es un tipo de dato de Elixir que se representa mediante una tupla de 3
-  elementos:
   \begin{itemize}
-    \item Un átomo que representa la función invocada u otra tupla que
-    representa un nodo interno del árbol.
-    \item Una lista de términos de metadatos de la función invocada.
-    \item Una lista de argumentos de la función del primer argumento.
+    \item Abstract Syntax Tree
+    \item La estructura interna del código Elixir
+    \item Se representa mediante una tupla de 3 elementos:
+    \begin{itemize}
+      \item Un átomo que representa la función invocada u otra tupla\\
+      que representa un nodo interno del árbol.
+      \item Una lista de términos de metadatos de la función invocada.
+      \item Una lista de argumentos de la función del primer argumento.
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Programación funcional}{AST de Elixir}
+\begin{frame}[fragile]{AST de Elixir}
   Para obtener el AST de una expresión de Elixir, se utiliza la función
   \texttt{quote/2}:
   \footnotesize  \begin{minted}{elixir}
@@ -188,10 +233,58 @@
   \end{minted}
 \end{frame}
 
-\begin{frame}
-  \centering
-  \huge{DEMO}
-  \textcolor{red}{macro unless, macro defpet (por definir)}
+\begin{frame}{Cosas para hablar}
+  \begin{itemize}
+    \item Hooks using y before\_compile
+    \item Formas especiales \_\_MODULE\_\_ y \_\_ENV\_\_ y \_\_CALLER\_\_
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplos básicos}
+  \begin{minted}{elixir}
+    defmodule ControlFlow do
+      defmacro unless(expression, do: block) do
+        quote do
+          if !unquote(expression), do: unquote(block)
+        end
+      end
+    end
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{DEMO}{Un DSL para definir mascotas}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \scriptsize\begin{minted}{elixir}
+        defmodule Example do
+          use Pets
+
+          pet "Bucky" do
+            species :dog
+            hobbies ["sniffing", "eating birds"]
+          end
+          defpet "Gardfield" do
+            species :cat
+            hobbies ["eating lasagna", "hating mondays"]
+          end
+        end
+      \end{minted}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \scriptsize\begin{minted}{elixir}
+        iex> Bucky.greet
+        "Hello my name is Bucky and I'm a dog"
+        iex> Gardfield.hobbies
+        "Gardfield's hobbies are eating
+        lasgna and hating mondays"
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Antipatrones}
+
 \end{frame}
 
 \section{Mi TFM: \texttt{LogicElixir}}
