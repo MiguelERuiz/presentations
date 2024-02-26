@@ -7,9 +7,9 @@
 \usepackage[nodayofweek,level]{datetime}
 \usepackage{graphicx}
 \usepackage{xcolor}
-% \usepackage{simplebnf}
-% \usepackage{multicol}
-% \setlength{\columnsep}{0.2cm}
+\usepackage{simplebnf}
+\usepackage{multicol}
+\setlength{\columnsep}{0.2cm}
 
 % %% Definiciones de comandos
 \newcommand{\mydate}{\formatdate{29}{02}{2024}}
@@ -162,7 +162,7 @@
     \item Con el operador \mintinline{elixir}|defmacro| podremos definir
     nuestras macros, respetando las reglas\footnotemark:
     \begin{itemize}
-      \item Don't Write macros (WTF)
+      \item Don't Write macros (WTF?)
       \item Use Macros Gratuitously
     \end{itemize}
   \end{itemize}
@@ -170,36 +170,35 @@
 \end{frame}
 
 \begin{frame}[fragile]{Metaprogramación en Elixir}{Ejemplos}
-  \begin{columns}
-    \begin{column}{0.5\textwidth}
-      \scriptsize \begin{minted}{elixir}
-        defmodule Sample.Weather do
-          use Ecto.Schema
-          schema "weather" do
-            field :city
-            field :temp_lo, :integer
-            field :temp_hi, :integer
-            field :prcp,    :float, default: 0.0
-          end
-        end
-      \end{minted}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \scriptsize \begin{minted}{elixir}
-        defmodule MyAppWeb.Router do
-          use MyAppWeb, :router
-
-          scope "/", MyAppWeb do
-            pipe_through :browser
-
-            get "/", PageController, :index
-            get "/about", PageController, :about
-          end
-        end
-      \end{minted}
-    \end{column}
-  \end{columns}
+  \begin{minted}{elixir}
+    defmodule Sample.Weather do
+      use Ecto.Schema
+      schema "weather" do
+        field :city     # String by default
+        field :temp_lo, :integer
+        field :temp_hi, :integer
+        field :prcp,    :float, default: 0.0
+      end
+    end
+  \end{minted}
 \end{frame}
+
+\begin{frame}[fragile]{Metaprogramación en Elixir}{Ejemplos}
+  \small\begin{minted}{elixir}
+    defmodule MyAppWeb.Router do
+      use Phoenix.Router
+
+      get "/login", LoginController, :show
+
+      scope "/" do
+        pipe_through [:browser]
+        get "/posts", PostController, :index
+        get "/posts/:id", PostController, :show
+      end
+    end
+  \end{minted}
+\end{frame}
+
 
 \begin{frame}{AST (de Elixir)}
   \begin{itemize}
@@ -212,6 +211,7 @@
       \item Una lista de términos de metadatos de la función invocada.
       \item Una lista de argumentos de la función del primer argumento.
     \end{itemize}
+    \item El tipo \texttt{Macro.t()} representa el AST de Elixir
   \end{itemize}
 \end{frame}
 
@@ -233,15 +233,31 @@
   \end{minted}
 \end{frame}
 
+\begin{frame}{Módulos y atributos}
+  \begin{itemize}
+    \item Los módulos de Elixir pueden registrar atributos para:
+    \begin{itemize}
+      \item definición de constantes
+      \item estructuras de almacenamiento temporales
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  Traer ejemplo del TFM del \texttt{Module.register\_attribute}, etc
+\end{frame}
+
 \begin{frame}{Cosas para hablar}
   \begin{itemize}
     \item Hooks using y before\_compile
     \item Formas especiales \_\_MODULE\_\_ y \_\_ENV\_\_ y \_\_CALLER\_\_
+    \item Macro.unique\_var vs Macro.var
+    \item Macro.escape
   \end{itemize}
 
 \end{frame}
 
-\begin{frame}[fragile]{Ejemplos básicos}
+\begin{frame}[fragile]{Ejemplo básico}
   \begin{minted}{elixir}
     defmodule ControlFlow do
       defmacro unless(expression, do: block) do
@@ -264,7 +280,7 @@
             species :dog
             hobbies ["sniffing", "eating birds"]
           end
-          defpet "Gardfield" do
+          pet "Gardfield" do
             species :cat
             hobbies ["eating lasagna", "hating mondays"]
           end
@@ -284,16 +300,493 @@
 \end{frame}
 
 \begin{frame}{Antipatrones}
-
+  Cosas que mirar en https://hexdocs.pm/elixir/macro-anti-patterns.html
 \end{frame}
 
 \section{Mi TFM: \texttt{LogicElixir}}
-\begin{frame}{\texttt{LogicElixir}}
+\begin{frame}{Mi TFM: \texttt{LogicElixir}}{Motivación}
   \begin{itemize}
-    \item cosas a traer de la presentación del TFM
+    \item La mayor de todas: aprender sobre metaprogramación (en Elixir).
+    \item Hacer mi primero proyecto (serio) en Elixir.
+    \item Acabar el Máster :D
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{\texttt{LogicElixir}}{Objetivo principal}
+  \begin{itemize}
+    \item Desarrollar una librería para Elixir que permita
+    a un programador especificar un programa lógico
+    \item Proporcionar mecanismos para realizar consultas sobre
+    ese programa lógico
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{\texttt{LogicElixir}: Prerrequisitos}{Programación Lógica}
+  \begin{minted}{prolog}
+    % Hechos
+    human(fry).
+    mutant(leela).
+    likes(fry, pizza).
+
+    % Reglas
+    pizza_lover(X):- likes(X, pizza).
+
+    member(X, [X | _]).
+    member(X, [_ | T]):- member(X, T).
+
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{\texttt{LogicElixir}}{Ejemplo}
+  \small \begin{minted}{elixir}
+    defmodule LogicModule do
+      use LogicElixir
+      defpred human(:fry)
+      defpred mutant(:leela)
+      defpred likes(:fry, :pizza)
+      defpred pizza_lover(X), do: likes(X, :pizza)
+      defpred member(X, [X | T])
+      defpred member(X, [H | T]) do
+        member(X, T)
+      end
+    end
+  \end{minted}
+\end{frame}
+
+\begin{frame}{\texttt{LogicElixir}}{Sintaxis}
+  \footnotesize \begin{block}{Términos lógicos}
+    \begin{bnfgrammar}
+      $T$ ::= $lit$ : literales
+        | $X$ : variables lógicas del conjunto \texttt{Var}
+        | [\,]
+        | [$T_1$ \textbar\ $T_2$]
+        | \{$T_1$, $T_2$, ..., $T_n$\}
+        | $f$($T_1$, $T_2$, ..., $T_n$) : llamadas a funciones de Elixir
+    \end{bnfgrammar}
+  \end{block}
+\end{frame}
+
+\begin{frame}{\texttt{LogicElixir}}{Sintaxis}
+  \begin{block}{Patrones}
+    \begin{bnfgrammar}
+      $P$ ::= $lit$
+      | $X$ : variables lógicas
+      | [\,]
+      | [$P_1$ \textbar\ $P_2$]
+      | \{$P_1$, $P_2$, ..., $P_n$\}
+    \end{bnfgrammar}
+  \end{block}
+\end{frame}
+
+\begin{frame}{\texttt{LogicElixir}}{Sintaxis}
+  \footnotesize \begin{block}{Objetivos y secuencias de objetivos}
+    \begin{bnfgrammar}
+      $G$ ::= $\epsilon$ | $g, G$
+    ;;
+      $g$ ::= $p$($T_1$, $T_2$, ..., $T_n$) : predicados lógicos
+          | $T_1$ = $T_2$ : unificación de términos
+          | $G_1$ ; ... ; $G_n$ : disyunción de secuencias
+          | $@$($e$) : expresiones de Elixir
+    \end{bnfgrammar}
+  \end{block}
+\end{frame}
+
+\begin{frame}{\texttt{LogicElixir}}{Sintaxis}
+  \begin{block}{Reglas}
+    \begin{equation*}
+      R ::= p(P_1, ..., P_n)\,[\,:-\, G]
+    \end{equation*}
+  \end{block}
+  \begin{block}{Definiciones de predicados}
+    \begin{equation*}
+      D =
+      \begin{bmatrix}
+        \quad p(P_{1,1},\, \ldots,\, P_{1,n}) \quad [:- \quad G_1]\\
+        \quad p(P_{2,1},\, \ldots,\, P_{2,n}) \quad [:- \quad G_2]\\
+        \vdots \\
+        \quad p(P_{m,1},\, \ldots,\, P_{m,n}) \quad [:- \quad G_m]
+      \end{bmatrix}
+    \end{equation*}
+  \end{block}
+\end{frame}
+
+\subsection{Lenguaje Core}
+\begin{frame}{Lenguaje Core}
+  \begin{itemize}
+    \item El lenguaje Core es el lenguaje de bajo nivel que servirá de nexo
+    entre \texttt{LogicElixir} y Elixir.
+    \item Una función Core agrupa todos los hechos y reglas de un predicado
+    \texttt{defpred} en una única función \texttt{defcore}.
+    \item Posee una sintaxis parecida a \texttt{LogicElixir}, pero con matices:
+    \begin{itemize}
+      \item No existen los patrones.
+      \item Ausencia de sintaxis azucarada en las listas.
+      \item Los predicados tienen que tener un cuerpo de función.
+    \end{itemize}
+    \item Los términos de este lenguaje estarán contenidos dentro del conjunto
+    \texttt{Term}.
+  \end{itemize}
+\end{frame}
+
+\subsection{Traducción}
+\begin{frame}{Traducción de \texttt{LogicElixir} a Core}
+  Se considera una definición de predicado $D$:
+  \begin{equation*}
+    D =
+    \begin{bmatrix}
+      \quad p(P_{1,1},\, \ldots,\, P_{1,n}) \quad :- \quad G_1\\
+      \quad p(P_{2,1},\, \ldots,\, P_{2,n}) \quad :- \quad G_2\\
+      \vdots \\
+      \quad p(P_{m,1},\, \ldots,\, P_{m,n}) \quad :- \quad G_m
+    \end{bmatrix}
+  \end{equation*}
+\end{frame}
+
+\begin{frame}{Traducción de \texttt{LogicElixir} a Core}
+  \begin{columns}
+    \column{0.7\textwidth}
+    \begin{align*}
+      \footnotesize generate\_defcore(D) = \left[
+        \begin{array}{lcr}
+          \textcolor{blue}{\texttt{defcore}\ } p(X_1, \ldots, X_n) \textcolor{blue}{\ \texttt{do}} \\
+          \ \ \ \ \textcolor{blue}{\texttt{choice do}} \\
+          \ \ \ \ \ \ \ \ P_{1,1} = X_1 \\
+          \ \ \ \ \ \ \ \ \ldots \\
+          \ \ \ \ \ \ \ \ P_{1,n} = X_n \\
+          \ \ \ \ \ \ \ \ G_1\\
+          \ \ \ \ \textcolor{blue}{\texttt{else}} \\
+          \ \ \ \ \ldots \\
+          \ \ \ \ \textcolor{blue}{\texttt{else}} \\
+          \ \ \ \ \ \ \ \ P_{m,1} = X_1 \\
+          \ \ \ \ \ \ \ \ \ldots \\
+          \ \ \ \ \ \ \ \ P_{m,n} = X_n \\
+          \ \ \ \ \ \ \ \ G_m\\
+          \ \ \ \ \textcolor{blue}{\texttt{end}} \\
+          \textcolor{blue}{\texttt{end}}
+        \end{array}
+      \right]
+    \end{align*}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Traducción de \texttt{LogicElixir} a Core}{Ejemplos}
+  \begin{multicols}{2}
+    \footnotesize \begin{minted}{elixir}
+      defpred planet(:tatooine)
+      defpred planet(:hoth)
+      defpred planet(:dagobah)
+    \end{minted}
+    \columnbreak
+    \footnotesize \begin{minted}{elixir}
+      defcore planet(X1) do
+        choice do
+          :tatooine = X1
+        else
+          :hoth = X1
+        else
+          :dagobah = X1
+        end
+      end
+    \end{minted}
+  \end{multicols}
+\end{frame}
+
+\begin{frame}[fragile]{Traducción de \texttt{LogicElixir} a Core}{Ejemplos}
+  \begin{multicols}{2}
+    \footnotesize \begin{minted}{elixir}
+      defpred member(X, [X | T])
+      defpred member(X, [H | T]) do
+        member(X, T)
+      end
+    \end{minted}
+    \columnbreak
+    \footnotesize \begin{minted}{elixir}
+      defcore member(X1, X2) do
+        choice do
+          X = X1
+          [X | T] = X2
+        else
+          X = X1
+          [H | T] = X2
+          member(X, T)
+        end
+      end
+    \end{minted}
+  \end{multicols}
+\end{frame}
+
+\begin{frame}[fragile]{Implementación}{\texttt{logic\_elixir.ex}}
+  \begin{block}{¿Qué supone la expresión \texttt{use LogicElixir}?}
+    Se inyecta un AST a través de la función \texttt{\_\_using\_\_/1}:
+    \begin{minted}[highlightlines={4}]{elixir}
+      defmodule LogicElixir do
+        defmacro __using__(_params) do
+          quote do
+            use LogicElixir.Defpred
+            use LogicElixir.Findall
+          end
+        end
+      end
+    \end{minted}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Implementación}{\texttt{defpred.ex}}
+  \footnotesize \begin{minted}{elixir}
+    defmodule LogicElixir.Defpred do
+      defmacro defpred(head) do
+        {pred_name, args_ast} = Macro.decompose_call(head)
+        Module.put_attribute(__CALLER__.module, :definitions,
+                              {pred_name, args_ast})
+      end
+
+      defmacro defpred(head, do: block) do
+        {pred_name, args_ast} = Macro.decompose_call(head)
+        Module.put_attribute(__CALLER__.module, :definitions,
+                              {pred_name, {args_ast, block}})
+      end
+    end
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Implementación}{\texttt{defpred.ex}}
+  \footnotesize \begin{minted}{elixir}
+    defmacro __before_compile__(env) do
+      VarBuilder.start_link()
+      definitions = Module.get_attribute(env.module, :definitions)
+                    |>
+                    Enum.reverse()
+      grouped_defs = definitions |>
+                     Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+      for {name, args} <- grouped_defs do
+        generate_defcore(name, args)
+      end
+    end
+  \end{minted}
+\end{frame}
+
+\begin{frame}{Traducción de Core a función de Elixir}
+  \begin{itemize}
+    \item El paso final es convertir la definición Core intermedia a código de Elixir.
+    \item Para ello, es necesario definir una serie de conjuntos, así como una
+    gramática BNF de estos términos disponibles \underline{en tiempo de ejecución}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Traducción de Core a función de Elixir}{Definición de conjuntos}
+  Además de \texttt{Var} y \texttt{Term}, se consideran los conjuntos:
+  \begin{itemize}
+    \item \texttt{EVar}, el conjunto de variables de Elixir.
+    \item \texttt{Subst}, el conjunto de sustituciones.
+    \item \texttt{Expr}, el conjunto de expresiones de Elixir.
+    \item \texttt{Eval}, el conjunto de valores de Elixir disponibles en
+    tiempo de ejecución.
+    \item \texttt{RTerm}, el conjunto de términos disponibles en tiempo
+    de ejecución.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Traducción de Core a función de Elixir}{Términos \textit{ground}}
+  \begin{itemize}
+    \item Para determinar en tiempo $O(1)$ si un término es \textit{ground} o no,
+    utilizamos tuplas \texttt{\{:ground, \_\}} en nuestra representación de los
+    elementos \texttt{RTerm}.
+    \item Para ello, han de cumplirse los siguientes invariantes:
+    \begin{itemize}
+      \item Si está representado de la forma \texttt{\{:ground, R\}}, entonces
+      no contiene variables.
+      \item Si no está representado de la forma \texttt{\{:ground, R\}}, entonces
+      ha de contener alguna variable.
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Traducción de Core a función de Elixir}{Estructura de datos}
+  Se manejarán algunas estructuras de datos para facilitar la traducción:
+  \begin{itemize}
+    \item $\Delta$: Relaciona los términos del conjunto \texttt{Var} con los
+    términos del conjunto \texttt{EVar}.
+    \item $\theta$: Relaciona los términos del conjunto \texttt{Var} con los
+    términos del conjunto \texttt{RTerm}.
+    \begin{align*}
+      \Delta = [X_1 \rightarrow x_1, X_2 \rightarrow x_2, \ldots, X_n \rightarrow x_n]\\
+      \theta = [X_1 \rightarrow R_1,\, X_2 \rightarrow R_2,\, \ldots,\, X_n \rightarrow R_n]
+    \end{align*}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Traducción de Core a función de Elixir}{Funciones auxiliares}
+  Se definen funciones auxiliares para facilitar la traducción y la reducción
+  de términos:
+
+  \begin{itemize}
+    \item \texttt{build\_list/2}
+    \item \texttt{build\_tuple/1}
+    \item \texttt{groundify/2}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Traducción de Core a función de Elixir}{Términos}
+  Los términos Core serán traducidos por la función \texttt{tr\_term/3}:
+  \scriptsize \begin{align*}
+    tr\_term(\Delta, x, lit) & = \textcolor{blue}{\texttt{\{:ground,}}\, \mathit{lit}\textcolor{blue}{\}} \\
+    tr\_term(\Delta, x, X) & = \textcolor{blue}{\texttt{\{:var,}}\, \Delta(X)\textcolor{blue}{\}} \\
+    tr\_term(\Delta, x, [T_1\, |\, T_2]) & = \textcolor{blue}{\texttt{build\_list}(}tr\_term(\Delta, x, T_1)\textcolor{blue}{,}\ tr\_term(\Delta, x, T_2)\textcolor{blue}{)} \\
+    tr\_term(\Delta, x, \{T_1, ..., T_n\}) & = \textcolor{blue}{\texttt{build\_tuple}([}tr\_term(\Delta, x, T_1)\textcolor{blue}{,}\ \ldots\textcolor{blue}{,}\ tr\_term(\Delta, x, T_n)\textcolor{blue}{])} \\
+    tr\_term(\Delta, x, f(T_1, ..., T_n)) & = \left[
+      \begin{array}{lcr}
+        x_1\ \textcolor{blue}{=}\ \textcolor{blue}{\texttt{groundify}(}x\textcolor{blue}{,}\ tr\_term(\Delta, x, T_1)\textcolor{blue}{)} \\
+        \vdots \\
+        x_n\ \textcolor{blue}{=}\ \textcolor{blue}{\texttt{groundify}(}x\textcolor{blue}{,}\ tr\_term(\Delta, x, T_n)\textcolor{blue}{)} \\
+        \textcolor{blue}{\texttt{\{:ground,}}\ f\textcolor{blue}{(}x_1\textcolor{blue}{,}\ \ldots\textcolor{blue}{,}\ x_n\textcolor{blue}{)}\textcolor{blue}{\}} \\
+      \end{array}
+        \right]
+  \end{align*}
+\end{frame}
+
+\begin{frame}{Traducción de Core a función de Elixir}{Objetivos y secuencias de objetivos (I)}
+  \small \begin{align*}
+    tr\_goals(\Delta,\ \epsilon) & = \textcolor{blue}{\texttt{fn}}\ th\ \textcolor{blue}{\rightarrow}\ \textcolor{blue}{[}th\textcolor{blue}{]}\ \textcolor{blue}{\texttt{end}}\\
+    tr\_goals(\Delta,\ (g,\, G))   & = \left[
+        \begin{array}{lrl}
+          \textcolor{blue}{\texttt{fn}}\ th_1\ \textcolor{blue}{\rightarrow}\\
+            \ \ \ \ \ \textcolor{blue}{(}tr\_goal(\Delta, g)\textcolor{blue}{)}.\textcolor{blue}{(}th_1\textcolor{blue}{)} \\
+            \ \ \ \ \ \textcolor{blue}{\texttt{|>\ Stream.flat\_map}(\texttt{fn}}\ th_2\ \textcolor{blue}{\rightarrow }\\
+            \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{(} tr\_goals(\Delta, G) \textcolor{blue}{)}.\textcolor{blue}{(}th_2\textcolor{blue}{)}\\
+            \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{end})}\\
+            \textcolor{blue}{\texttt{end}}
+        \end{array}
+      \right]
+  \end{align*}
+\end{frame}
+
+\begin{frame}{Traducción de Core a función de Elixir}{Objetivos y secuencias de objetivos (II)}
+  \scriptsize \begin{align*}
+    tr\_goal(\Delta, p\texttt{($T_1$, \ldots, $T_n$)}) & = \left[
+      \begin{array}{lrl}
+        \textcolor{blue}{\texttt{fn}}\ th\ \textcolor{blue}{\rightarrow}\ \\
+        \ \ \ \ \ \ \ p\textcolor{blue}{(}tr\_term(\Delta, th, T_1)\textcolor{blue}{,}\ \ldots\textcolor{blue}{,}\ tr\_term(\Delta, th, T_n)\textcolor{blue}{)}.\textcolor{blue}{(}th\textcolor{blue}{)}\\
+        \textcolor{blue}{\texttt{end}}
+      \end{array}
+    \right]\\
+    tr\_goal(\Delta, \texttt{$T_1$ = $T_2$}) & = \left[
+      \begin{array}{lrl}
+        \textcolor{blue}{\texttt{fn}}\ th\ \textcolor{blue}{\rightarrow}\\
+        \ \ \ \ \ \ \ \textcolor{blue}{\texttt{unify\_gen}(}th, tr\_term(\Delta, th, T_1), tr\_term(\Delta, th, T_2)\textcolor{blue}{)} \\
+        \textcolor{blue}{\texttt{end}}
+      \end{array}
+    \right]\\
+    tr\_goal(\Delta, \texttt{\ $G_1$; \ldots ; $G_n$}) & = \left[
+      \begin{array}{lrl}
+        \textcolor{blue}{\texttt{fn}}\ th\ \textcolor{blue}{\rightarrow\ [}tr\_goals(\Delta, G_1)\textcolor{blue}{,}\ \ldots\textcolor{blue}{,}\ tr\_goals(\Delta, G_n)\textcolor{blue}{]}\\
+        \ \ \ \ \ \ \ \textcolor{blue}{\texttt{|>\ Stream.flat\_map}(\texttt{fn\ f}\ \rightarrow\ \texttt{f}.(}th\textcolor{blue}{)\ \texttt{end})}\ \\
+        \textcolor{blue}{\texttt{end}}
+      \end{array}
+    \right]\\
+    tr\_goal(\Delta, @(T)) & = \left[
+      \begin{array}{lrl}
+        \textcolor{blue}{\texttt{fn}}\ th\ \textcolor{blue}{\rightarrow} \\
+        \ \ \ \ \ \ \ \textcolor{blue}{\texttt{check\_b}(}th,\ \textcolor{blue}{\texttt{groundify}(}th,\ tr\_term(\Delta, th, T\textcolor{blue}{))} \\
+        \textcolor{blue}{\texttt{end}}
+      \end{array}
+      \right]
+  \end{align*}
+\end{frame}
+
+\begin{frame}{Traducción de Core a función de Elixir}{Predicado Core a función Elixir}
+  \scriptsize \begin{align*}
+    tr\_def(p(X_1, \ldots, X_n)\mathit{:-} G) & = \left[
+      \begin{array}{lrl}
+        \textcolor{blue}{\texttt{def}}\,\, p(t_1, \ldots, t_n)\,\, \textcolor{blue}{\texttt{do}} \\
+          \ \ \ \ x_1 = \textcolor{blue}{\texttt{VarBuilder.gen\_var()}} \\
+          \ \ \ \ \vdots \\
+          \ \ \ \ x_n = \textcolor{blue}{\texttt{VarBuilder.gen\_var()}} \\
+          \ \ \ \ y_1 = \textcolor{blue}{\texttt{VarBuilder.gen\_var()}} \\
+          \ \ \ \ \vdots \\
+          \ \ \ \ y_m = \textcolor{blue}{\texttt{VarBuilder.gen\_var()}} \\
+          \ \ \ \ \textcolor{blue}{\texttt{fn}}\,\, th_1 \textcolor{blue}{\rightarrow} \\
+          \ \ \ \ \ \ \ \ th_2 = \textcolor{blue}{\texttt{Map.merge}}(th_1, \\
+          \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{Map.new}}([\{x_1, t_1\}, \ldots, \{x_n, t_n\}])) \\
+          \ \ \ \ \ \ \ \ (tr\_goals(\Delta, G)).(th_2) \\
+          \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{|>}} \\
+          \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{Stream.map}}(\textcolor{blue}{\&\texttt{Map.drop}(\&1, [}\\
+          \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ x_1, \ldots, x_n, y_1, \ldots, y_m\textcolor{blue}{]))}\\
+          \ \ \ \ \textcolor{blue}{\texttt{end}} \\
+          \textcolor{blue}{\texttt{end}}
+      \end{array}
+    \right]
+  \end{align*}
+\end{frame}
+
+\subsection{\texttt{Findall}}
+\begin{frame}{Consulta de predicados}
+  \begin{itemize}
+    \item \texttt{LogicElixir} ofrece un mecanismo de consulta sobre los
+    predicados que haya declarado el usuario en su proyecto.
+    \item La macro \texttt{findall} sirve de interfaz entre \texttt{LogicElixir}
+    y Elixir.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Consulta de predicados}{Lenguaje}
+  \begin{equation*}
+    F ::= \texttt{findall}\ T\ [\texttt{into}\ E\ ]\ \texttt{do}\ G
+  \end{equation*}
+  Donde:
+  \begin{itemize}
+    \item $T$ es un término \texttt{LogicElixir}.
+    \item $G$ es una secuencia de objetivos \texttt{LogicElixir}.
+    \item $E$ es un término opcional que implementa el protocolo \texttt{Enumerable}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Consulta de predicados}{Traducción}
+  \begin{columns}
+    \column{0.7\textwidth}
+    \footnotesize \begin{align*}
+        tr\_findall(T, G, E\ \backslash\backslash\ \texttt{nil}) = \left[
+        \begin{array}{lcr}
+          x_1 = \textcolor{blue}{\texttt{VarBuilder.gen\_var()}} \\
+          \ldots \\
+          x_n = \textcolor{blue}{\texttt{VarBuilder.gen\_var()}} \\
+          solutions = \textcolor{blue}{(}tr\_goals(\Delta, G)\textcolor{blue}{)}\textcolor{blue}{.(\texttt{\%\{\}})} \\
+          \ \ \ \ \ \textcolor{blue}{\texttt{|>\,Stream.map}(\texttt{fn}}\ sol\ \textcolor{blue}{\rightarrow} \\
+          \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{t =\ }} tr\_term(\Delta, sol, T) \\
+          \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{groundify(}}sol, \textcolor{blue}{\texttt{t})} \\
+          \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{end)}} \\
+          \textcolor{blue}{\texttt{case}}\ E \ \textcolor{blue}{\texttt{do}} \\
+          \ \ \ \ \ \ \textcolor{blue}{\texttt{nil}\ \rightarrow\ } solutions \\
+          \ \ \ \ \ \ \textcolor{blue}{\texttt{Z} \ \ \ \ \rightarrow\ } solutions \textcolor{blue}{\ \texttt{|>\ Enum.into}(\texttt{Z})} \\
+          \textcolor{blue}{\texttt{end}}
+        \end{array}
+      \right]
+    \end{align*}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Dificultades encontradas}
+  \begin{itemize}
+    \item Falta de (buena) documentación
+    \item Falta de código de apoyo (o desactualizado)
+    \item Contramedidas: test unitarios
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusiones}
+  \begin{itemize}
+    \item La metaprogramación es una area bonita (y MUY compleja)
+    \item Seguramente nunca tengas que usar esta técnica
+    \item Nunca está de más conocer qué hace la ``magia''
+    \item Los tests son tus amigos
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Bibliografía}
+  \begin{itemize}
+    \item El libro de Metaprogramming Elixir
+    \item La web de Sasa Juric
+    \item La docu de SpecialForms, Macro y Module
+    \item The art of prolog
+  \end{itemize}
 \end{frame}
 \end{document}
