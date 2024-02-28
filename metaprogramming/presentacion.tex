@@ -5,6 +5,7 @@
 % \usepackage[utf8]{inputenc}
 \usepackage{minted}
 \usepackage[nodayofweek,level]{datetime}
+\usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{simplebnf}
@@ -73,6 +74,19 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Una cosa os prometo...}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \includegraphics[width=0.8\textwidth]{charlie_day.png}
+    \end{column}
+
+    \begin{column}{0.5\textwidth}
+      No acabaremos así (o al menos, no mucho\dots)
+    \end{column}
+  \end{columns}
+\end{frame}
+
 \begin{frame}{Finalizadas las presentaciones\dots}
   \includegraphics[width=0.8\textwidth]{calvin-hobbes.jpg}
 \end{frame}
@@ -120,55 +134,6 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Metaprogramación en Elixir}{¿Cómo?}
-  \begin{itemize}
-    \item A través de \underline{macros}, las cuales permiten \textbf{extender}
-    el lenguaje
-  \end{itemize}
-  \begin{block}{¿Cuántas palabras reservadas hay en Elixir?}
-    \begin{itemize}
-      \item 8
-      \item 15
-      \item 37
-      \item ninguna
-    \end{itemize}
-  \end{block}
-\end{frame}
-
-\begin{frame}{Metaprogramación en Elixir}{¿Cómo?}
-  \begin{itemize}
-    \item A través de \underline{macros}, las cuales permiten \textbf{expandir}
-    el lenguaje
-  \end{itemize}
-  \begin{block}{¿Cuántas palabras reservadas hay en Elixir?}
-    \begin{itemize}
-      \item 8
-      \item \textcolor{red}{15}
-      \item 37
-      \item ninguna
-    \end{itemize}
-    \mintinline{elixir}{true, false, nil, when, and, or, not, in}
-    \mintinline{elixir}|fn, do, end, catch, rescue, after, else|
-  \end{block}
-\end{frame}
-
-\begin{frame}{Metaprogramación en Elixir}{Proceso de compilación}
-  \centering
-  \includegraphics[width=0.6\textwidth]{compilation_process.png}
-\end{frame}
-
-\begin{frame}{Metaprogramación en Elixir}
-  \begin{itemize}
-    \item Con el operador \mintinline{elixir}|defmacro| podremos definir
-    nuestras macros, respetando las reglas\footnotemark:
-    \begin{itemize}
-      \item Don't Write macros (WTF?)
-      \item Use Macros Gratuitously
-    \end{itemize}
-  \end{itemize}
-  \footnotetext[1]{Metaprogramming Elixir: Macro Rules}
-\end{frame}
-
 \begin{frame}[fragile]{Metaprogramación en Elixir}{Ejemplos}
   \begin{minted}{elixir}
     defmodule Sample.Weather do
@@ -199,6 +164,55 @@
   \end{minted}
 \end{frame}
 
+\begin{frame}[fragile]{Metaprogramación en Elixir}{Ejemplos}
+  \small\begin{minted}{elixir}
+    defmodule Calculator do
+      use ExActor.GenServer
+
+      defstart start_link, do: initial_state(0)
+
+      defcast inc(x), state: state, do: new_state(state + x)
+      defcast dec(x), state: state, do: new_state(state - x)
+
+      defcall get, state: state, do: reply(state)
+
+      defcast stop, do: stop_server(:normal)
+    end
+  \end{minted}
+\end{frame}
+
+\begin{frame}{Metaprogramación en Elixir}{¿Cómo?}
+  \begin{itemize}
+    \item A través de \underline{macros}, las cuales permiten \textbf{extender}
+    el lenguaje
+  \end{itemize}
+  \begin{block}{¿Cuántas palabras reservadas hay en Elixir?}
+    \begin{itemize}
+      \item 8
+      \item 15
+      \item 37
+      \item ninguna
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Metaprogramación en Elixir}{¿Cómo?}
+  \begin{itemize}
+    \item A través de \underline{macros}, las cuales permiten \textbf{expandir}
+    el lenguaje
+  \end{itemize}
+  \begin{block}{¿Cuántas palabras reservadas hay en Elixir?\footnotemark[2]}
+    \begin{itemize}
+      \item 8
+      \item \textcolor{red}{15}
+      \item 37
+      \item ninguna
+    \end{itemize}
+    \mintinline{elixir}{true, false, nil, when, and, or, not, in}
+    \mintinline{elixir}|fn, do, end, catch, rescue, after, else|
+  \end{block}
+  \footnotetext[2]{\href{https://hexdocs.pm/elixir/1.16/syntax-reference.html\#reserved-words}{https://hexdocs.pm/elixir/1.16/syntax-reference.html\#reserved-words}}
+\end{frame}
 
 \begin{frame}{AST (de Elixir)}
   \begin{itemize}
@@ -233,31 +247,33 @@
   \end{minted}
 \end{frame}
 
-\begin{frame}{Módulos y atributos}
-  \begin{itemize}
-    \item Los módulos de Elixir pueden registrar atributos para:
-    \begin{itemize}
-      \item definición de constantes
-      \item estructuras de almacenamiento temporales
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
 \begin{frame}
-  Traer ejemplo del TFM del \texttt{Module.register\_attribute}, etc
+  \centering
+  \huge
+  DEMO\\
+  \large
+  (Desmembrando ASTs)
 \end{frame}
 
-\begin{frame}{Cosas para hablar}
+\begin{frame}{Metaprogramación en Elixir}{Proceso de compilación}
+  \centering
+  \includegraphics[width=0.6\textwidth]{compilation_process.png}
+\end{frame}
+
+\begin{frame}{Metaprogramación en Elixir}{¿Cómo definimos macros?}
   \begin{itemize}
-    \item Hooks using y before\_compile
-    \item Formas especiales \_\_MODULE\_\_ y \_\_ENV\_\_ y \_\_CALLER\_\_
-    \item Macro.unique\_var vs Macro.var
-    \item Macro.escape
+    \item Con el operador \mintinline{elixir}|defmacro| podremos definir
+    nuestras macros, respetando las reglas\footnotemark:
+    \begin{itemize}
+      \item Don't Write macros (WTF?)
+      \item Use Macros Gratuitously
+    \end{itemize}
+    \item El operador \textbf{tiene que} devolver un AST
   \end{itemize}
-
+  \footnotetext[1]{Metaprogramming Elixir: Macro Rules}
 \end{frame}
 
-\begin{frame}[fragile]{Ejemplo básico}
+\begin{frame}[fragile]{Definición de macros}{Ejemplo básico}
   \begin{minted}{elixir}
     defmodule ControlFlow do
       defmacro unless(expression, do: block) do
@@ -273,7 +289,7 @@
   \begin{columns}
     \begin{column}{0.5\textwidth}
       \scriptsize\begin{minted}{elixir}
-        defmodule Example do
+        defmodule Template do
           use Pets
 
           pet "Bucky" do
@@ -282,7 +298,7 @@
           end
           pet "Gardfield" do
             species :cat
-            hobbies ["eating lasagna", "hating mondays"]
+            hobbies ["hating mondays"]
           end
         end
       \end{minted}
@@ -292,14 +308,14 @@
         iex> Bucky.greet
         "Hello my name is Bucky and I'm a dog"
         iex> Gardfield.hobbies
-        "Gardfield's hobbies are eating
-        lasgna and hating mondays"
+        "Gardfield's hobbie is hating mondays"
       \end{minted}
     \end{column}
   \end{columns}
 \end{frame}
 
 \begin{frame}{Antipatrones}
+  \textcolor{red}{COMPLETAR}\\
   Cosas que mirar en https://hexdocs.pm/elixir/macro-anti-patterns.html
 \end{frame}
 
@@ -764,6 +780,14 @@
   \end{columns}
 \end{frame}
 
+\begin{frame}
+  \centering
+  \huge
+  DEMO\\
+  \large
+  (Probando mi TFM)
+\end{frame}
+
 \begin{frame}{Dificultades encontradas}
   \begin{itemize}
     \item Falta de (buena) documentación
@@ -774,14 +798,15 @@
 
 \begin{frame}{Conclusiones}
   \begin{itemize}
-    \item La metaprogramación es una area bonita (y MUY compleja)
+    \item La metaprogramación es una área bonita (y MUY compleja)
     \item Seguramente nunca tengas que usar esta técnica
-    \item Nunca está de más conocer qué hace la ``magia''
+    \item No está de más conocer qué hace la ``magia''
     \item Los tests son tus amigos
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Bibliografía}
+  \textcolor{red}{COMPLETAR}
   \begin{itemize}
     \item El libro de Metaprogramming Elixir
     \item La web de Sasa Juric
