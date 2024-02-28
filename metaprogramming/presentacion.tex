@@ -6,15 +6,22 @@
 \usepackage{minted}
 \usepackage[nodayofweek,level]{datetime}
 \usepackage{hyperref}
+\usepackage{url}
+\usepackage{bibentry}
 \usepackage{graphicx}
+\usepackage{booktabs} % Allows the use of \toprule,
 \usepackage{xcolor}
 \usepackage{simplebnf}
 \usepackage{multicol}
+% \usepackage{biblatex}
+% \addbibresource{biblo.bib}
 \setlength{\columnsep}{0.2cm}
 
 % %% Definiciones de comandos
 \newcommand{\mydate}{\formatdate{29}{02}{2024}}
 \graphicspath{ {images/} }
+\beamertemplatenavigationsymbolsempty
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Tema y estilo de la presentación
 \usetheme{Madrid}
@@ -201,7 +208,7 @@
     \item A través de \underline{macros}, las cuales permiten \textbf{expandir}
     el lenguaje
   \end{itemize}
-  \begin{block}{¿Cuántas palabras reservadas hay en Elixir?\footnotemark[2]}
+  \begin{block}{¿Cuántas palabras reservadas hay en Elixir?\footnotemark[1]}
     \begin{itemize}
       \item 8
       \item \textcolor{red}{15}
@@ -211,7 +218,7 @@
     \mintinline{elixir}{true, false, nil, when, and, or, not, in}
     \mintinline{elixir}|fn, do, end, catch, rescue, after, else|
   \end{block}
-  \footnotetext[2]{\href{https://hexdocs.pm/elixir/1.16/syntax-reference.html\#reserved-words}{https://hexdocs.pm/elixir/1.16/syntax-reference.html\#reserved-words}}
+  \footnotetext[1]{\href{https://hexdocs.pm/elixir/1.16/syntax-reference.html\#reserved-words}{https://hexdocs.pm/elixir/1.16/syntax-reference.html\#reserved-words}}
 \end{frame}
 
 \begin{frame}{AST (de Elixir)}
@@ -263,14 +270,14 @@
 \begin{frame}{Metaprogramación en Elixir}{¿Cómo definimos macros?}
   \begin{itemize}
     \item Con el operador \mintinline{elixir}|defmacro| podremos definir
-    nuestras macros, respetando las reglas\footnotemark:
+    nuestras macros, respetando las reglas\footnotemark[2]:
     \begin{itemize}
       \item Don't Write macros (WTF?)
       \item Use Macros Gratuitously
     \end{itemize}
     \item El operador \textbf{tiene que} devolver un AST
   \end{itemize}
-  \footnotetext[1]{Metaprogramming Elixir: Macro Rules}
+  \footnotetext[2]{Metaprogramming Elixir: Macro Rules}
 \end{frame}
 
 \begin{frame}[fragile]{Definición de macros}{Ejemplo básico}
@@ -315,8 +322,13 @@
 \end{frame}
 
 \begin{frame}{Antipatrones}
-  \textcolor{red}{COMPLETAR}\\
-  Cosas que mirar en https://hexdocs.pm/elixir/macro-anti-patterns.html
+  Sobreutilizar esta técnica podría llevarnos a algunos de estos casos\footnotemark[3]:
+  \begin{itemize}
+    \item \textit{Large code generation}: Cuando la macro genera demasiado código
+    \item \textit{Unnecessary macros}: ¿Estás seguro que este código debe ser una macro?
+    \item \texttt{use} instead of \texttt{import}: Propagación de dependencias
+  \end{itemize}
+  \footnotetext[3]{\url{https://hexdocs.pm/elixir/macro-anti-patterns.html}\ (\mintinline{elixir}|>=1.16|)}
 \end{frame}
 
 \section{Mi TFM: \texttt{LogicElixir}}
@@ -534,11 +546,27 @@
 \begin{frame}[fragile]{Implementación}{\texttt{logic\_elixir.ex}}
   \begin{block}{¿Qué supone la expresión \texttt{use LogicElixir}?}
     Se inyecta un AST a través de la función \texttt{\_\_using\_\_/1}:
-    \begin{minted}[highlightlines={4}]{elixir}
+    \small\begin{minted}[highlightlines={4}]{elixir}
       defmodule LogicElixir do
         defmacro __using__(_params) do
           quote do
             use LogicElixir.Defpred
+            use LogicElixir.Findall
+          end
+        end
+      end
+    \end{minted}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Implementación}{\texttt{logic\_elixir.ex}}
+  \begin{block}{¿Qué supone la expresión \texttt{use LogicElixir}?}
+    Se inyecta un AST a través de la función \texttt{\_\_using\_\_/1}:
+    \small\begin{minted}[highlightlines={4}]{elixir}
+      defmodule LogicElixir do
+        defmacro __using__(_params) do
+          quote do
+            use LogicElixir.Defpred # <= Dependency injection
             use LogicElixir.Findall
           end
         end
@@ -805,13 +833,24 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Bibliografía}
-  \textcolor{red}{COMPLETAR}
-  \begin{itemize}
-    \item El libro de Metaprogramming Elixir
-    \item La web de Sasa Juric
-    \item La docu de SpecialForms, Macro y Module
-    \item The art of prolog
-  \end{itemize}
+\begin{frame}{References}
+  \begin{thebibliography}{99} % Beamer does not support BibTeX so references must be nserted manually as below
+    \bibitem[McCord, 2015]{p1} Chris McCord (2015)
+    \newblock Metaprogramming Elixir
+  \end{thebibliography}
+  \begin{thebibliography}{99} % Beamer does not support BibTeX so references must be nserted manually as below
+    \bibitem[Valim, 2023]{p2} José Valim
+    \newblock Kernel.SpecialForms, Macro, Module
+  \end{thebibliography}
+  \begin{thebibliography}{99}
+    \bibitem[Sterling \& Shapiro, 1986]{p4} Leon Sterling and Ehud Shapiro (1986)
+    \newblock The Art of Prolog
+  \end{thebibliography}
+  \begin{thebibliography}{99}
+    \bibitem{LogicElixir} \url{https://github.com/MiguelERuiz/logic\_elixir}
+  \end{thebibliography}
+  \begin{thebibliography}{99}
+    \bibitem{LogicElixirExamples} \url{https://github.com/MiguelERuiz/logic\_elixir\_examples}
+  \end{thebibliography}
 \end{frame}
 \end{document}
