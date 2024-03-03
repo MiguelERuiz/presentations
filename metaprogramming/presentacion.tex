@@ -335,7 +335,7 @@
 \begin{frame}{Mi TFM: \texttt{LogicElixir}}{Motivación}
   \begin{itemize}
     \item La mayor de todas: aprender sobre metaprogramación (en Elixir).
-    \item Hacer mi primero proyecto (serio) en Elixir.
+    \item Hacer mi primer proyecto (serio) en Elixir.
     \item Acabar el Máster :D
   \end{itemize}
 \end{frame}
@@ -385,7 +385,7 @@
   \footnotesize \begin{block}{Términos lógicos}
     \begin{bnfgrammar}
       $T$ ::= $lit$ : literales
-        | $X$ : variables lógicas del conjunto \texttt{Var}
+        | $X$ : variables lógicas
         | [\,]
         | [$T_1$ \textbar\ $T_2$]
         | \{$T_1$, $T_2$, ..., $T_n$\}
@@ -438,7 +438,7 @@
   \end{block}
 \end{frame}
 
-\subsection{Lenguaje Core}
+% \subsection{Lenguaje Core}
 \begin{frame}{Lenguaje Core}
   \begin{itemize}
     \item El lenguaje Core es el lenguaje de bajo nivel que servirá de nexo
@@ -451,12 +451,10 @@
       \item Ausencia de sintaxis azucarada en las listas.
       \item Los predicados tienen que tener un cuerpo de función.
     \end{itemize}
-    \item Los términos de este lenguaje estarán contenidos dentro del conjunto
-    \texttt{Term}.
   \end{itemize}
 \end{frame}
 
-\subsection{Traducción}
+% \subsection{Traducción}
 \begin{frame}{Traducción de \texttt{LogicElixir} a Core}
   Se considera una definición de predicado $D$:
   \begin{equation*}
@@ -617,126 +615,6 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Traducción de Core a función de Elixir}{Definición de conjuntos}
-  Además de \texttt{Var} y \texttt{Term}, se consideran los conjuntos:
-  \begin{itemize}
-    \item \texttt{EVar}, el conjunto de variables de Elixir.
-    \item \texttt{Subst}, el conjunto de sustituciones.
-    \item \texttt{Expr}, el conjunto de expresiones de Elixir.
-    \item \texttt{Eval}, el conjunto de valores de Elixir disponibles en
-    tiempo de ejecución.
-    \item \texttt{RTerm}, el conjunto de términos disponibles en tiempo
-    de ejecución.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Traducción de Core a función de Elixir}{Términos \textit{ground}}
-  \begin{itemize}
-    \item Para determinar en tiempo $O(1)$ si un término es \textit{ground} o no,
-    utilizamos tuplas \texttt{\{:ground, \_\}} en nuestra representación de los
-    elementos \texttt{RTerm}.
-    \item Para ello, han de cumplirse los siguientes invariantes:
-    \begin{itemize}
-      \item Si está representado de la forma \texttt{\{:ground, R\}}, entonces
-      no contiene variables.
-      \item Si no está representado de la forma \texttt{\{:ground, R\}}, entonces
-      ha de contener alguna variable.
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Traducción de Core a función de Elixir}{Estructura de datos}
-  Se manejarán algunas estructuras de datos para facilitar la traducción:
-  \begin{itemize}
-    \item $\Delta$: Relaciona los términos del conjunto \texttt{Var} con los
-    términos del conjunto \texttt{EVar}.
-    \item $\theta$: Relaciona los términos del conjunto \texttt{Var} con los
-    términos del conjunto \texttt{RTerm}.
-    \begin{align*}
-      \Delta = [X_1 \rightarrow x_1, X_2 \rightarrow x_2, \ldots, X_n \rightarrow x_n]\\
-      \theta = [X_1 \rightarrow R_1,\, X_2 \rightarrow R_2,\, \ldots,\, X_n \rightarrow R_n]
-    \end{align*}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Traducción de Core a función de Elixir}{Funciones auxiliares}
-  Se definen funciones auxiliares para facilitar la traducción y la reducción
-  de términos:
-
-  \begin{itemize}
-    \item \texttt{build\_list/2}
-    \item \texttt{build\_tuple/1}
-    \item \texttt{groundify/2}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Traducción de Core a función de Elixir}{Términos}
-  Los términos Core serán traducidos por la función \texttt{tr\_term/3}:
-  \scriptsize \begin{align*}
-    tr\_term(\Delta, x, lit) & = \textcolor{blue}{\texttt{\{:ground,}}\, \mathit{lit}\textcolor{blue}{\}} \\
-    tr\_term(\Delta, x, X) & = \textcolor{blue}{\texttt{\{:var,}}\, \Delta(X)\textcolor{blue}{\}} \\
-    tr\_term(\Delta, x, [T_1\, |\, T_2]) & = \textcolor{blue}{\texttt{build\_list}(}tr\_term(\Delta, x, T_1)\textcolor{blue}{,}\ tr\_term(\Delta, x, T_2)\textcolor{blue}{)} \\
-    tr\_term(\Delta, x, \{T_1, ..., T_n\}) & = \textcolor{blue}{\texttt{build\_tuple}([}tr\_term(\Delta, x, T_1)\textcolor{blue}{,}\ \ldots\textcolor{blue}{,}\ tr\_term(\Delta, x, T_n)\textcolor{blue}{])} \\
-    tr\_term(\Delta, x, f(T_1, ..., T_n)) & = \left[
-      \begin{array}{lcr}
-        x_1\ \textcolor{blue}{=}\ \textcolor{blue}{\texttt{groundify}(}x\textcolor{blue}{,}\ tr\_term(\Delta, x, T_1)\textcolor{blue}{)} \\
-        \vdots \\
-        x_n\ \textcolor{blue}{=}\ \textcolor{blue}{\texttt{groundify}(}x\textcolor{blue}{,}\ tr\_term(\Delta, x, T_n)\textcolor{blue}{)} \\
-        \textcolor{blue}{\texttt{\{:ground,}}\ f\textcolor{blue}{(}x_1\textcolor{blue}{,}\ \ldots\textcolor{blue}{,}\ x_n\textcolor{blue}{)}\textcolor{blue}{\}} \\
-      \end{array}
-        \right]
-  \end{align*}
-\end{frame}
-
-\begin{frame}{Traducción de Core a función de Elixir}{Objetivos y secuencias de objetivos (I)}
-  \small \begin{align*}
-    tr\_goals(\Delta,\ \epsilon) & = \textcolor{blue}{\texttt{fn}}\ th\ \textcolor{blue}{\rightarrow}\ \textcolor{blue}{[}th\textcolor{blue}{]}\ \textcolor{blue}{\texttt{end}}\\
-    tr\_goals(\Delta,\ (g,\, G))   & = \left[
-        \begin{array}{lrl}
-          \textcolor{blue}{\texttt{fn}}\ th_1\ \textcolor{blue}{\rightarrow}\\
-            \ \ \ \ \ \textcolor{blue}{(}tr\_goal(\Delta, g)\textcolor{blue}{)}.\textcolor{blue}{(}th_1\textcolor{blue}{)} \\
-            \ \ \ \ \ \textcolor{blue}{\texttt{|>\ Stream.flat\_map}(\texttt{fn}}\ th_2\ \textcolor{blue}{\rightarrow }\\
-            \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{(} tr\_goals(\Delta, G) \textcolor{blue}{)}.\textcolor{blue}{(}th_2\textcolor{blue}{)}\\
-            \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{end})}\\
-            \textcolor{blue}{\texttt{end}}
-        \end{array}
-      \right]
-  \end{align*}
-\end{frame}
-
-\begin{frame}{Traducción de Core a función de Elixir}{Objetivos y secuencias de objetivos (II)}
-  \scriptsize \begin{align*}
-    tr\_goal(\Delta, p\texttt{($T_1$, \ldots, $T_n$)}) & = \left[
-      \begin{array}{lrl}
-        \textcolor{blue}{\texttt{fn}}\ th\ \textcolor{blue}{\rightarrow}\ \\
-        \ \ \ \ \ \ \ p\textcolor{blue}{(}tr\_term(\Delta, th, T_1)\textcolor{blue}{,}\ \ldots\textcolor{blue}{,}\ tr\_term(\Delta, th, T_n)\textcolor{blue}{)}.\textcolor{blue}{(}th\textcolor{blue}{)}\\
-        \textcolor{blue}{\texttt{end}}
-      \end{array}
-    \right]\\
-    tr\_goal(\Delta, \texttt{$T_1$ = $T_2$}) & = \left[
-      \begin{array}{lrl}
-        \textcolor{blue}{\texttt{fn}}\ th\ \textcolor{blue}{\rightarrow}\\
-        \ \ \ \ \ \ \ \textcolor{blue}{\texttt{unify\_gen}(}th, tr\_term(\Delta, th, T_1), tr\_term(\Delta, th, T_2)\textcolor{blue}{)} \\
-        \textcolor{blue}{\texttt{end}}
-      \end{array}
-    \right]\\
-    tr\_goal(\Delta, \texttt{\ $G_1$; \ldots ; $G_n$}) & = \left[
-      \begin{array}{lrl}
-        \textcolor{blue}{\texttt{fn}}\ th\ \textcolor{blue}{\rightarrow\ [}tr\_goals(\Delta, G_1)\textcolor{blue}{,}\ \ldots\textcolor{blue}{,}\ tr\_goals(\Delta, G_n)\textcolor{blue}{]}\\
-        \ \ \ \ \ \ \ \textcolor{blue}{\texttt{|>\ Stream.flat\_map}(\texttt{fn\ f}\ \rightarrow\ \texttt{f}.(}th\textcolor{blue}{)\ \texttt{end})}\ \\
-        \textcolor{blue}{\texttt{end}}
-      \end{array}
-    \right]\\
-    tr\_goal(\Delta, @(T)) & = \left[
-      \begin{array}{lrl}
-        \textcolor{blue}{\texttt{fn}}\ th\ \textcolor{blue}{\rightarrow} \\
-        \ \ \ \ \ \ \ \textcolor{blue}{\texttt{check\_b}(}th,\ \textcolor{blue}{\texttt{groundify}(}th,\ tr\_term(\Delta, th, T\textcolor{blue}{))} \\
-        \textcolor{blue}{\texttt{end}}
-      \end{array}
-      \right]
-  \end{align*}
-\end{frame}
-
 \begin{frame}{Traducción de Core a función de Elixir}{Predicado Core a función Elixir}
   \scriptsize \begin{align*}
     tr\_def(p(X_1, \ldots, X_n)\mathit{:-} G) & = \left[
@@ -762,7 +640,7 @@
   \end{align*}
 \end{frame}
 
-\subsection{\texttt{Findall}}
+% \subsection{\texttt{Findall}}
 \begin{frame}{Consulta de predicados}
   \begin{itemize}
     \item \texttt{LogicElixir} ofrece un mecanismo de consulta sobre los
@@ -782,30 +660,6 @@
     \item $G$ es una secuencia de objetivos \texttt{LogicElixir}.
     \item $E$ es un término opcional que implementa el protocolo \texttt{Enumerable}.
   \end{itemize}
-\end{frame}
-
-\begin{frame}{Consulta de predicados}{Traducción}
-  \begin{columns}
-    \column{0.7\textwidth}
-    \footnotesize \begin{align*}
-        tr\_findall(T, G, E\ \backslash\backslash\ \texttt{nil}) = \left[
-        \begin{array}{lcr}
-          x_1 = \textcolor{blue}{\texttt{VarBuilder.gen\_var()}} \\
-          \ldots \\
-          x_n = \textcolor{blue}{\texttt{VarBuilder.gen\_var()}} \\
-          solutions = \textcolor{blue}{(}tr\_goals(\Delta, G)\textcolor{blue}{)}\textcolor{blue}{.(\texttt{\%\{\}})} \\
-          \ \ \ \ \ \textcolor{blue}{\texttt{|>\,Stream.map}(\texttt{fn}}\ sol\ \textcolor{blue}{\rightarrow} \\
-          \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{t =\ }} tr\_term(\Delta, sol, T) \\
-          \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{groundify(}}sol, \textcolor{blue}{\texttt{t})} \\
-          \ \ \ \ \ \ \ \ \ \ \textcolor{blue}{\texttt{end)}} \\
-          \textcolor{blue}{\texttt{case}}\ E \ \textcolor{blue}{\texttt{do}} \\
-          \ \ \ \ \ \ \textcolor{blue}{\texttt{nil}\ \rightarrow\ } solutions \\
-          \ \ \ \ \ \ \textcolor{blue}{\texttt{Z} \ \ \ \ \rightarrow\ } solutions \textcolor{blue}{\ \texttt{|>\ Enum.into}(\texttt{Z})} \\
-          \textcolor{blue}{\texttt{end}}
-        \end{array}
-      \right]
-    \end{align*}
-  \end{columns}
 \end{frame}
 
 \begin{frame}
@@ -833,7 +687,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{References}
+\begin{frame}{Bibliografía}
   \begin{thebibliography}{99} % Beamer does not support BibTeX so references must be nserted manually as below
     \bibitem[McCord, 2015]{p1} Chris McCord (2015)
     \newblock Metaprogramming Elixir
@@ -848,9 +702,30 @@
   \end{thebibliography}
   \begin{thebibliography}{99}
     \bibitem{LogicElixir} \url{https://github.com/MiguelERuiz/logic\_elixir}
+    \newblock Repo de la librería \texttt{LogicElixir}
   \end{thebibliography}
   \begin{thebibliography}{99}
     \bibitem{LogicElixirExamples} \url{https://github.com/MiguelERuiz/logic\_elixir\_examples}
+    \newblock Repo de uso de la librería \texttt{LogicElixir}
+  \end{thebibliography}
+\end{frame}
+
+\begin{frame}{Otros recursos}
+  \begin{thebibliography}{99}
+      \bibitem{ChrisMcCord} \url{https://chrismccord.com/blog/2014/03/13/write-less-do-more-and-have-fun-with-elixir-macros/}
+      \newblock Charla de Chris McCord en la ElixirConf (2014)
+  \end{thebibliography}
+  \begin{thebibliography}{99}
+      \bibitem{SasaJuric} \url{https://www.theerlangelist.com/article/macros_1}
+      \newblock Blog de Sasa Juric sobre Macros (2014)
+  \end{thebibliography}
+  \begin{thebibliography}{99}
+      \bibitem{RepoPets} \url{https://github.com/MiguelERuiz/pets}
+      \newblock Repo de Pets
+  \end{thebibliography}
+  \begin{thebibliography}{99}
+      \bibitem{RepoSlides} \url{https://github.com/MiguelERuiz/presentations}
+      \newblock Repo de Presentaciones
   \end{thebibliography}
 \end{frame}
 \end{document}
